@@ -3,8 +3,13 @@
  * Resize and compress an image file before uploading to Google Apps Script.
  * This is crucial because GAS has payload limits and raw 12MP photos are too large.
  */
-export const compressImage = (file: File, maxWidth = 1600, quality = 0.6): Promise<string> => {
+export const compressImage = (file: File, maxWidth = 800, quality = 0.5): Promise<string> => {
     return new Promise((resolve, reject) => {
+        // Validation: reject files > 5MB to save memory execution
+        if (file.size > 5 * 1024 * 1024) {
+            console.warn("Large image detected, aggressive compression active");
+        }
+
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (event) => {
@@ -15,9 +20,17 @@ export const compressImage = (file: File, maxWidth = 1600, quality = 0.6): Promi
                 let width = img.width;
                 let height = img.height;
 
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
+                // Scaling logic
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxWidth) { // Check height for portrait images
+                        width = Math.round((width * maxWidth) / height);
+                        height = maxWidth;
+                    }
                 }
 
                 elem.width = width;

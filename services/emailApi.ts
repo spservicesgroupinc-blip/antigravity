@@ -89,10 +89,10 @@ export const sendWelcomeEmail = async (to: string, customerName: string): Promis
  * Sends account credentials to a new Company Admin.
  */
 export const sendAccountCreationEmail = async (
-    to: string, 
-    companyName: string, 
-    username: string, 
-    password: string, 
+    to: string,
+    companyName: string,
+    username: string,
+    password: string,
     crewPin: string
 ): Promise<EmailResponse> => {
     if (!EMAIL_SERVICE_URL || EMAIL_SERVICE_URL.includes('PLACEHOLDER')) {
@@ -122,5 +122,39 @@ export const sendAccountCreationEmail = async (
     } catch (error: any) {
         console.error("Account Creation Email Error:", error);
         return { status: 'error', message: error.message || "Failed to send account email." };
+    }
+};
+
+/**
+ * Sends a generic custom email message.
+ */
+export const sendGenericEmail = async (to: string, subject: string, body: string): Promise<EmailResponse> => {
+    if (!EMAIL_SERVICE_URL || EMAIL_SERVICE_URL.includes('PLACEHOLDER')) {
+        return { status: 'error', message: "Email service not configured." };
+    }
+
+    try {
+        const response = await fetch(EMAIL_SERVICE_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({
+                action: 'SEND_MESSAGE',
+                payload: { to, subject, body }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result: EmailResponse = await response.json();
+        return result;
+
+    } catch (error: any) {
+        console.error("Generic Email Error:", error);
+        return { status: 'error', message: error.message || "Failed to send email." };
     }
 };

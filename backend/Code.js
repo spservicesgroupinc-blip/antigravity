@@ -19,7 +19,7 @@ const CONSTANTS = {
 
     // Column Indices (1-based for getRange)
     COL_JSON_ESTIMATE: 9,
-    COL_JSON_CUSTOMER: 10, 
+    COL_JSON_CUSTOMER: 10,
     COL_JSON_INVENTORY: 6,
     COL_JSON_EQUIPMENT: 4
 };
@@ -95,7 +95,7 @@ function doPost(e) {
             switch (action) {
                 case 'SYNC_DOWN': result = handleSyncDown(userSS); break;
                 case 'SYNC_UP': result = handleSyncUp(userSS, payload); break;
-                case 'START_JOB': result = handleStartJob(userSS, payload); break; 
+                case 'START_JOB': result = handleStartJob(userSS, payload); break;
                 case 'COMPLETE_JOB': result = handleCompleteJob(userSS, payload); break; // Updated Logic
                 case 'MARK_JOB_PAID': result = handleMarkJobPaid(userSS, payload); break;
                 case 'DELETE_ESTIMATE': result = handleDeleteEstimate(userSS, payload); break;
@@ -166,7 +166,7 @@ function handleSignup(p) {
 
     // Append including email at the end
     sh.appendRow([p.username.trim(), hashPassword(p.password), p.companyName, r.ssId, r.folderId, new Date(), crewPin, p.email]);
-    
+
     return {
         username: p.username,
         companyName: p.companyName,
@@ -351,9 +351,9 @@ function handleSyncUp(ss, payload) {
     // 2. Customers
     if (state.customers && Array.isArray(state.customers) && state.customers.length > 0) {
         const cSheet = ss.getSheetByName(CONSTANTS.TAB_CUSTOMERS);
-        
+
         if (cSheet.getLastRow() > 1) cSheet.getRange(2, 1, cSheet.getLastRow() - 1, cSheet.getLastColumn()).clearContent();
-        
+
         const cRows = state.customers.map(c => [
             c.id || "",
             c.name || "",
@@ -362,11 +362,11 @@ function handleSyncUp(ss, payload) {
             c.state || "",
             c.zip || "",
             c.phone || "",
-            c.email || "", 
+            c.email || "",
             c.status || "Active",
             JSON.stringify(c)
         ]);
-        
+
         if (cRows.length) cSheet.getRange(2, 1, cRows.length, cRows[0].length).setValues(cRows);
     }
 
@@ -444,18 +444,18 @@ function handleStartJob(ss, payload) {
     const { estimateId } = payload;
     const sheet = ss.getSheetByName(CONSTANTS.TAB_ESTIMATES);
     const finder = sheet.getRange("A:A").createTextFinder(estimateId).matchEntireCell(true).findNext();
-    
+
     if (finder) {
         const row = finder.getRow();
         const jsonCell = sheet.getRange(row, CONSTANTS.COL_JSON_ESTIMATE);
         const est = safeParse(jsonCell.getValue());
-        
+
         if (est) {
             est.executionStatus = 'In Progress';
             // Optional: Log start time if not using external sheet
-            if (!est.actuals) est.actuals = {}; 
-            est.actuals.lastStartedAt = new Date().toISOString(); 
-            
+            if (!est.actuals) est.actuals = {};
+            est.actuals.lastStartedAt = new Date().toISOString();
+
             jsonCell.setValue(JSON.stringify(est));
             return { success: true, status: 'In Progress' };
         }
@@ -466,10 +466,10 @@ function handleStartJob(ss, payload) {
 function handleUploadImage(ss, payload) {
     const { base64Data, folderId, fileName } = payload;
     let targetFolder;
-    
+
     // 1. Resolve Target Folder
-    if (folderId) { 
-        try { targetFolder = DriveApp.getFolderById(folderId); } catch (e) { console.error("Invalid Folder ID", e); } 
+    if (folderId) {
+        try { targetFolder = DriveApp.getFolderById(folderId); } catch (e) { console.error("Invalid Folder ID", e); }
     }
     // Fallback: Try to find the folder containing the Spreadsheet
     if (!targetFolder) {
@@ -491,12 +491,12 @@ function handleUploadImage(ss, payload) {
 
     // 3. Process Base64
     const encoded = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
-    const decoded = Utilities.base64Decode(encoded); 
+    const decoded = Utilities.base64Decode(encoded);
     const blob = Utilities.newBlob(decoded, MimeType.JPEG, fileName || `photo_${new Date().getTime()}.jpg`);
 
     // 4. Create File
     const file = photoFolder.createFile(blob);
-    
+
     // 5. Set Permissions (Public Read)
     try {
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -506,10 +506,10 @@ function handleUploadImage(ss, payload) {
 
     // 6. Construct Direct Embed URL
     const fileId = file.getId();
-    // Using uc?export=view allows the image to be loaded inside an <img> tag
-    const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    // Using thumbnail endpoint is much more reliable for <img> tags than /uc?export=view
+    const directUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
 
-    return { url: directUrl, fileId: fileId }; 
+    return { url: directUrl, fileId: fileId };
 }
 
 function handleSavePdf(ss, p) {
@@ -570,11 +570,11 @@ function handleCompleteJob(ss, payload) {
     const { estimateId, actuals } = payload;
     const estSheet = ss.getSheetByName(CONSTANTS.TAB_ESTIMATES);
     const finder = estSheet.getRange("A:A").createTextFinder(estimateId).matchEntireCell(true).findNext();
-    
+
     if (!finder) throw new Error("Estimate not found");
     const row = finder.getRow();
     const est = safeParse(estSheet.getRange(row, CONSTANTS.COL_JSON_ESTIMATE).getValue());
-    
+
     // Prevent double processing if network is flaky
     if (est.executionStatus === 'Completed' && est.inventoryProcessed) {
         return { success: true, message: "Already completed" };
@@ -585,23 +585,23 @@ function handleCompleteJob(ss, payload) {
     const setRows = setSheet.getDataRange().getValues();
     let countRow = -1;
     let counts = { openCellSets: 0, closedCellSets: 0 };
-    
-    for (let i = 0; i < setRows.length; i++) { 
-        if (setRows[i][0] === 'warehouse_counts' || setRows[i][0] === 'warehouse') { 
-            counts = safeParse(setRows[i][1]) || counts; 
-            countRow = i + 1; 
-            break; 
-        } 
+
+    for (let i = 0; i < setRows.length; i++) {
+        if (setRows[i][0] === 'warehouse_counts' || setRows[i][0] === 'warehouse') {
+            counts = safeParse(setRows[i][1]) || counts;
+            countRow = i + 1;
+            break;
+        }
     }
-    
+
     if (countRow !== -1) {
         // Calculate usage
         const ocUsed = Number(actuals.openCellSets) || 0;
         const ccUsed = Number(actuals.closedCellSets) || 0;
-        
+
         counts.openCellSets = (counts.openCellSets || 0) - ocUsed;
         counts.closedCellSets = (counts.closedCellSets || 0) - ccUsed;
-        
+
         setSheet.getRange(countRow, 2).setValue(JSON.stringify(counts));
     }
 
@@ -611,7 +611,7 @@ function handleCompleteJob(ss, payload) {
         const invData = invSheet.getDataRange().getValues();
         const invMap = new Map();
         for (let i = 1; i < invData.length; i++) { invMap.set(invData[i][0], i + 1); }
-        
+
         actuals.inventory.forEach(actItem => {
             let rowIdx = invMap.get(actItem.id);
             if (rowIdx) {
@@ -620,7 +620,7 @@ function handleCompleteJob(ss, payload) {
                     const actQty = Number(actItem.quantity) || 0;
                     // Deduct actual usage
                     currentJson.quantity = (currentJson.quantity || 0) - actQty;
-                    invSheet.getRange(rowIdx, 3).setValue(currentJson.quantity); 
+                    invSheet.getRange(rowIdx, 3).setValue(currentJson.quantity);
                     invSheet.getRange(rowIdx, CONSTANTS.COL_JSON_INVENTORY).setValue(JSON.stringify(currentJson));
                 }
             }
@@ -635,22 +635,22 @@ function handleCompleteJob(ss, payload) {
             const eqData = eqSheet.getDataRange().getValues();
             const eqMap = new Map();
             for (let i = 1; i < eqData.length; i++) { eqMap.set(eqData[i][0], i + 1); }
-            
+
             equipmentUsed.forEach(eqItem => {
                 let rowIdx = eqMap.get(eqItem.id);
                 if (rowIdx) {
                     const currentJson = safeParse(eqSheet.getRange(rowIdx, CONSTANTS.COL_JSON_EQUIPMENT).getValue());
                     if (currentJson) {
-                        currentJson.lastSeen = { 
-                            jobId: estimateId, 
-                            customerName: est.customer?.name || "Unknown", 
-                            date: actuals.completionDate || new Date().toISOString(), 
-                            crewMember: actuals.completedBy || "Crew" 
+                        currentJson.lastSeen = {
+                            jobId: estimateId,
+                            customerName: est.customer?.name || "Unknown",
+                            date: actuals.completionDate || new Date().toISOString(),
+                            crewMember: actuals.completedBy || "Crew"
                         };
                         // Mark as returned/available upon job completion if desired, or keep as 'In Use' at that site?
                         // Usually equipment comes back to warehouse.
-                        currentJson.status = 'Available'; 
-                        
+                        currentJson.status = 'Available';
+
                         eqSheet.getRange(rowIdx, 3).setValue('Available');
                         eqSheet.getRange(rowIdx, CONSTANTS.COL_JSON_EQUIPMENT).setValue(JSON.stringify(currentJson));
                     }
@@ -666,18 +666,18 @@ function handleCompleteJob(ss, payload) {
         const date = actuals.completionDate || new Date().toISOString();
         const custName = est.customer?.name || "Unknown";
         const tech = actuals.completedBy || "Crew";
-        
-        const addLog = (name, qty, unit) => { 
-            if (Number(qty) > 0) { 
-                const entry = { id: Utilities.getUuid(), date, jobId: estimateId, customerName: custName, materialName: name, quantity: Number(qty), unit, loggedBy: tech }; 
-                newLogs.push([new Date(date), estimateId, custName, name, Number(qty), unit, tech, JSON.stringify(entry)]); 
-            } 
+
+        const addLog = (name, qty, unit) => {
+            if (Number(qty) > 0) {
+                const entry = { id: Utilities.getUuid(), date, jobId: estimateId, customerName: custName, materialName: name, quantity: Number(qty), unit, loggedBy: tech };
+                newLogs.push([new Date(date), estimateId, custName, name, Number(qty), unit, tech, JSON.stringify(entry)]);
+            }
         };
-        
+
         addLog("Open Cell Foam", actuals.openCellSets, "Sets");
         addLog("Closed Cell Foam", actuals.closedCellSets, "Sets");
         if (actuals.inventory) { actuals.inventory.forEach(i => addLog(i.name, i.quantity, i.unit)); }
-        
+
         if (newLogs.length > 0) {
             logSheet.getRange(logSheet.getLastRow() + 1, 1, newLogs.length, newLogs[0].length).setValues(newLogs);
         }
@@ -690,10 +690,10 @@ function handleCompleteJob(ss, payload) {
     est.lastModified = new Date().toISOString();
 
     estSheet.getRange(row, CONSTANTS.COL_JSON_ESTIMATE).setValue(JSON.stringify(est));
-    
+
     // Force a flush to ensure Admin sees it on next poll
-    SpreadsheetApp.flush(); 
-    
+    SpreadsheetApp.flush();
+
     return { success: true };
 }
 
@@ -723,32 +723,32 @@ function handleMarkJobPaid(ss, payload) {
 function handleSubmitTrial(p) { getMasterSpreadsheet().getSheetByName("Trial_Memberships").appendRow([p.name, p.email, p.phone, new Date()]); return { success: true }; }
 function handleLogTime(p) { const ss = SpreadsheetApp.openByUrl(p.workOrderUrl); const s = ss.getSheetByName("Daily Crew Log"); s.appendRow([new Date().toLocaleDateString(), p.user, new Date(p.startTime).toLocaleTimeString(), p.endTime ? new Date(p.endTime).toLocaleTimeString() : "", "", "", ""]); return { success: true }; }
 function handleDeleteEstimate(ss, p) { const s = ss.getSheetByName(CONSTANTS.TAB_ESTIMATES); const f = s.getRange("A:A").createTextFinder(p.estimateId).matchEntireCell(true).findNext(); if (f) s.deleteRow(f.getRow()); return { success: true }; }
-function reconcileCompletedJobs(ss, incomingState) { 
+function reconcileCompletedJobs(ss, incomingState) {
     // Optimization: Since handleCompleteJob now handles inventory deductions robustly, 
     // we only need to sync the object state here, not redo math.
-    if (!incomingState.savedEstimates) return; 
-    
-    const sheet = ss.getSheetByName(CONSTANTS.TAB_ESTIMATES); 
-    const data = sheet.getDataRange().getValues(); 
-    const dbMap = new Map(); 
-    
-    for (let i = 1; i < data.length; i++) { 
-        const jsonColIndex = CONSTANTS.COL_JSON_ESTIMATE - 1; 
-        if (data[i].length <= jsonColIndex) continue; 
-        const json = data[i][jsonColIndex]; 
-        if (!json || json === "") continue; 
-        const obj = safeParse(json); 
-        if (obj && obj.id) dbMap.set(obj.id, obj); 
-    } 
-    
+    if (!incomingState.savedEstimates) return;
+
+    const sheet = ss.getSheetByName(CONSTANTS.TAB_ESTIMATES);
+    const data = sheet.getDataRange().getValues();
+    const dbMap = new Map();
+
+    for (let i = 1; i < data.length; i++) {
+        const jsonColIndex = CONSTANTS.COL_JSON_ESTIMATE - 1;
+        if (data[i].length <= jsonColIndex) continue;
+        const json = data[i][jsonColIndex];
+        if (!json || json === "") continue;
+        const obj = safeParse(json);
+        if (obj && obj.id) dbMap.set(obj.id, obj);
+    }
+
     // Only update local objects with DB truth if DB has newer data
-    incomingState.savedEstimates.forEach((incomingEst, idx) => { 
-        const dbEst = dbMap.get(incomingEst.id); 
-        if (dbEst) { 
+    incomingState.savedEstimates.forEach((incomingEst, idx) => {
+        const dbEst = dbMap.get(incomingEst.id);
+        if (dbEst) {
             // If DB says completed but local doesn't, update local
             if (dbEst.executionStatus === 'Completed' && incomingEst.executionStatus !== 'Completed') {
                 incomingState.savedEstimates[idx] = dbEst;
             }
-        } 
-    }); 
+        }
+    });
 }

@@ -43,6 +43,10 @@ function doPost(e) {
       // New Account Welcome (With credentials)
       const result = handleSendAccountCreation(payload);
       return sendResponse('success', result);
+    } else if (action === 'SEND_MESSAGE') {
+      // Generic Message
+      const result = handleSendMessage(payload);
+      return sendResponse('success', result);
     } else {
       throw new Error("Invalid Action: " + action);
     }
@@ -64,13 +68,13 @@ function handleSendDocument(payload) {
   if (!to) throw new Error("Recipient email is required.");
   if (!attachmentBase64) throw new Error("Document attachment is missing.");
 
-  const base64Data = attachmentBase64.includes(',') 
-    ? attachmentBase64.split(',')[1] 
+  const base64Data = attachmentBase64.includes(',')
+    ? attachmentBase64.split(',')[1]
     : attachmentBase64;
-    
+
   const blob = Utilities.newBlob(
-    Utilities.base64Decode(base64Data), 
-    MimeType.PDF, 
+    Utilities.base64Decode(base64Data),
+    MimeType.PDF,
     filename || "Document.pdf"
   );
 
@@ -82,6 +86,26 @@ function handleSendDocument(payload) {
     htmlBody: htmlBody,
     name: CONFIG.SENDER_NAME,
     attachments: [blob]
+  });
+
+  return { sent: true, to: to };
+}
+
+/**
+ * Handles sending a generic custom message
+ */
+function handleSendMessage(payload) {
+  const { to, subject, body } = payload;
+  if (!to) throw new Error("Recipient email is required.");
+  if (!body) throw new Error("Message body is required.");
+
+  const htmlBody = createGenericMessageTemplate(body);
+
+  MailApp.sendEmail({
+    to: to,
+    subject: subject || "Message from RFE Foam App",
+    htmlBody: htmlBody,
+    name: CONFIG.SENDER_NAME
   });
 
   return { sent: true, to: to };
@@ -147,6 +171,25 @@ function createEmailTemplate(content) {
       <div style="background-color: #F1F5F9; padding: 15px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
         &copy; ${new Date().getFullYear()} RFE Foam Equipment.<br/>
         This is an automated message.
+      </div>
+    </div>
+  `;
+}
+
+function createGenericMessageTemplate(content) {
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0F172A; padding: 20px; text-align: center;">
+        <span style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1px;">RFE FOAM APP</span>
+      </div>
+      <div style="padding: 30px; background-color: #ffffff;">
+        <p style="font-size: 16px; line-height: 1.6; color: #0F172A;">
+          ${content.replace(/\n/g, '<br/>')}
+        </p>
+      </div>
+      <div style="background-color: #F1F5F9; padding: 15px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+        &copy; ${new Date().getFullYear()} RFE Foam Equipment.<br/>
+        Professional Insulation Services
       </div>
     </div>
   `;
