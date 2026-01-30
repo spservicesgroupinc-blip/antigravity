@@ -13,10 +13,12 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // Make sure the manifest filename is manifest.json (same as in vercel.json)
-        filename: 'manifest.json',
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'icons/*.png'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
+        injectRegister: 'auto',
+        devOptions: {
+          enabled: true
+        },
         manifest: {
           name: 'Spray Foam Pro Calculator',
           short_name: 'Foam Pro',

@@ -3,7 +3,7 @@ const CACHE_NAME = 'foam-pro-v2-windows';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   'https://cdn.tailwindcss.com',
