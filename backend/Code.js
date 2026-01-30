@@ -86,6 +86,7 @@ function doPost(e) {
         else if (action === 'CREW_LOGIN') result = handleCrewLogin(payload);
         else if (action === 'SUBMIT_TRIAL') result = handleSubmitTrial(payload);
         else if (action === 'LOG_TIME') result = handleLogTime(payload);
+        else if (action === 'UPDATE_PASSWORD') result = handleUpdatePassword(payload);
 
         // Protected Routes (Require User Sheet ID)
         else {
@@ -248,6 +249,25 @@ function handleCrewLogin(p) {
         role: 'crew',
         token: generateToken(d[0], 'crew')
     };
+}
+
+function handleUpdatePassword(p) {
+    const ss = getMasterSpreadsheet();
+    const sh = ss.getSheetByName("Users_DB");
+    const f = sh.getRange("A:A").createTextFinder(p.username.trim()).matchEntireCell(true).findNext();
+    if (!f) throw new Error("User not found.");
+
+    const r = f.getRow();
+    const currentHash = sh.getRange(r, 2).getValue();
+
+    if (String(currentHash) !== hashPassword(p.currentPassword)) {
+        throw new Error("Incorrect current password.");
+    }
+
+    // Set new password
+    sh.getRange(r, 2).setValue(hashPassword(p.newPassword));
+
+    return { success: true };
 }
 
 // --- DATA SYNCING ---

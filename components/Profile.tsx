@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Upload, Save, Loader2, Users, KeyRound, ShieldCheck, Copy } from 'lucide-react';
+import { Upload, Save, Loader2, Users, KeyRound, ShieldCheck, Copy, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { CalculatorState } from '../types';
 
 interface ProfileProps {
@@ -12,6 +12,37 @@ interface ProfileProps {
 }
 
 export const Profile: React.FC<ProfileProps> = ({ state, onUpdateProfile, onManualSync, syncStatus, username }) => {
+
+    const [passwordData, setPasswordData] = React.useState({ current: '', new: '' });
+    const [passwordStatus, setPasswordStatus] = React.useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [passwordMsg, setPasswordMsg] = React.useState('');
+
+    const handlePasswordUpdate = async () => {
+        if (!passwordData.current || !passwordData.new) {
+            setPasswordMsg("Please fill in both fields.");
+            setPasswordStatus('error');
+            return;
+        }
+        if (!username) {
+            setPasswordMsg("User session missing.");
+            setPasswordStatus('error');
+            return;
+        }
+
+        setPasswordStatus('loading');
+        setPasswordMsg('');
+
+        try {
+            const { updatePassword } = await import('../services/api');
+            await updatePassword(username, passwordData.current, passwordData.new);
+            setPasswordStatus('success');
+            setPasswordMsg("Password updated successfully.");
+            setPasswordData({ current: '', new: '' });
+        } catch (e: any) {
+            setPasswordStatus('error');
+            setPasswordMsg(e.message || "Failed to update password.");
+        }
+    };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -123,6 +154,60 @@ export const Profile: React.FC<ProfileProps> = ({ state, onUpdateProfile, onManu
                     <p className="mt-3 text-[10px] text-slate-400 font-medium italic">
                         * Updating the PIN requires a "Save & Sync" to take effect on crew devices.
                     </p>
+                </div>
+
+                {/* 3. SECURITY SETTINGS (Admin Password) */}
+                <div className="border-t border-slate-100 pt-8">
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+                            <Lock className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Admin Security</h3>
+                            <p className="text-xs text-slate-500 font-medium">Update your administrator login password.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-brand focus-within:border-brand transition-all">
+                            <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                                Current Password
+                            </label>
+                            <input
+                                type="password"
+                                value={passwordData.current}
+                                onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                                className="w-full bg-transparent font-bold text-slate-900 outline-none placeholder-slate-300"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-brand focus-within:border-brand transition-all">
+                            <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                                New Password
+                            </label>
+                            <input
+                                type="password"
+                                value={passwordData.new}
+                                onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+                                className="w-full bg-transparent font-bold text-slate-900 outline-none placeholder-slate-300"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                        {passwordStatus === 'error' && <p className="text-xs text-red-500 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {passwordMsg}</p>}
+                        {passwordStatus === 'success' && <p className="text-xs text-emerald-600 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {passwordMsg}</p>}
+                        {passwordStatus === 'idle' && <span></span>}
+
+                        <button
+                            onClick={handlePasswordUpdate}
+                            disabled={passwordStatus === 'loading'}
+                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                        >
+                            {passwordStatus === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Password"}
+                        </button>
+                    </div>
                 </div>
 
                 {/* SAVE BUTTON */}

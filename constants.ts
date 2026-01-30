@@ -1,6 +1,6 @@
 
 // Web App URL from Google Apps Script Deployment (Main Backend)
-export const GOOGLE_SCRIPT_URL: string = 'https://script.google.com/macros/s/AKfycbznRu-GHqwBXOkvCheztisFRN4Lr1o-Q80v4PTizagxRMFMI8lbDsJBI-gnQtw7UDXqDQ/exec'
+export const GOOGLE_SCRIPT_URL: string = 'https://script.google.com/macros/s/AKfycbzILl-nOJaqRV6SIV5Q9VB1F_xeGkx7QMIlxOcPpx7kL-fvs9WGbsPNsBs2ez_V8suugw/exec'
 
 // Web App URL for the Dedicated Email Service (Separate Script)
 // TODO: Deploy backend/EmailService.js and paste the Web App URL here

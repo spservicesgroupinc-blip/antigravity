@@ -164,6 +164,15 @@ export const loginUser = async (username: string, password: string): Promise<Use
 };
 
 /**
+ * Updates user password
+ */
+export const updatePassword = async (username: string, currentPassword: string, newPassword: string): Promise<boolean> => {
+    const result = await apiRequest({ action: 'UPDATE_PASSWORD', payload: { username, currentPassword, newPassword } });
+    if (result.status === 'success') return true;
+    throw new Error(result.message || "Password update failed");
+};
+
+/**
  * Authenticates crew member using PIN
  */
 export const loginCrew = async (username: string, pin: string): Promise<UserSession | null> => {
