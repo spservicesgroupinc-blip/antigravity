@@ -3,16 +3,22 @@ echo ========================================================
 echo               PUSHING CODE TO GITHUB
 echo ========================================================
 echo.
-echo This script will send your code to:
-echo https://github.com/spservicesgroupinc-blip/rfefoamapp.git
+echo DESTINATION: https://github.com/spservicesgroupinc-blip/antigravity.git
 echo.
-echo If a window pops up asking you to sign in, please do so.
+echo IMPORTANT:
+echo 1. If you have 2-Factor Auth (2FA) on, your PASSWORD will NOT work.
+echo 2. You might need a "Personal Access Token" instead of a password.
 echo.
-echo Running: git push -u origin main
+echo When the box appears:
+echo - USERNAME: Your GitHub username
+echo - PASSWORD: Your Password OR Personal Access Token
 echo.
+echo Running git push...
 git push -u origin main
 echo.
 echo ========================================================
-echo               DONE
+echo IF IT FAILED (403):
+echo You might need to generate a specific Token on GitHub.
+echo OR try installing "GitHub Desktop" which is much easier.
 echo ========================================================
 pause
