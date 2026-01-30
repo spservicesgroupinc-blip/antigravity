@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'icons/*.png'],
         manifest: {
+          filename: 'manifest.json',
           name: 'Spray Foam Pro Calculator',
           short_name: 'Foam Pro',
           description: 'Professional Spray Foam Estimation & Rig Management for Windows Desktop',
