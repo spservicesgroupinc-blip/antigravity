@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
       // Stale-while-revalidate strategy for better updates
       const fetchPromise = fetch(event.request).then((networkResponse) => {
         // Check if we received a valid response
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && networkResponse.status === 200 && (networkResponse.type === 'basic' || networkResponse.type === 'cors' || networkResponse.type === 'default')) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
