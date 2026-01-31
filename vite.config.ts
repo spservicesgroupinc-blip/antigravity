@@ -20,13 +20,32 @@ export default defineConfig(({ mode }) => {
           enabled: true
         },
         manifest: {
+          id: '/',
           name: 'Spray Foam Pro Calculator',
           short_name: 'Foam Pro',
           description: 'Professional Spray Foam Estimation & Rig Management for Windows Desktop',
           theme_color: '#E30613',
           background_color: '#f8fafc',
           display: 'standalone',
+          orientation: 'any',
           start_url: '/',
+          categories: ['productivity', 'utilities', 'business'],
+          screenshots: [
+            {
+              src: '/screenshots/desktop.png',
+              sizes: '1280x800',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'Dashboard View'
+            },
+            {
+              src: '/screenshots/mobile.png',
+              sizes: '390x844',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Mobile Estimation'
+            }
+          ],
           icons: [
             {
               src: '/icons/icon-192.png',

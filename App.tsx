@@ -4,6 +4,7 @@ import SprayFoamCalculator from './components/SprayFoamCalculator';
 import { CalculatorProvider } from './context/CalculatorContext';
 
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { ReloadPrompt } from './components/ReloadPrompt';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <CalculatorProvider>
         <SprayFoamCalculator />
         <PWAInstallPrompt />
+        <ReloadPrompt />
       </CalculatorProvider>
     </div>
   );
